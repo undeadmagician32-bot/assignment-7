@@ -413,6 +413,7 @@ async function viewExperiment() {
     h('div', { class: 'row' },
       field('오늘 계획한 시간(분)', h('input', { name: 'planned_min', type: 'number', min: 0, max: 1440, required: true })),
       field('오늘 실제로 쓴 시간(분)', h('input', { name: 'actual_min', type: 'number', min: 0, max: 1440, required: true })),
+      field('오늘 완수한 과제 비율(%, 선택)', h('input', { name: 'completion_pct', type: 'number', min: 0, max: 100 })),
       field('메모(선택)', h('input', { name: 'note', maxlength: 300, size: 30 })),
       h('button', { class: 'primary', disabled: blocked }, '저장')),
     h('p', { class: 'mut' }, '같은 날 다시 저장하면 그날 값이 바뀝니다. 5일이 모두 서로 다른 날이어야 합니다.')));
@@ -436,15 +437,16 @@ async function viewExperiment() {
   }
 
   parts.push(h('div', { class: 'tablewrap' }, h('table', {},
-    h('thead', {}, h('tr', {}, ['일차', '날짜(서울)', '계획(분)', '실제(분)', '차이(분)', '메모', '저장 시각'].map((x) => h('th', {}, x)))),
+    h('thead', {}, h('tr', {}, ['일차', '날짜(서울)', '계획(분)', '실제(분)', '차이(분)', '완수율(%)', '메모', '저장 시각'].map((x) => h('th', {}, x)))),
     h('tbody', {}, d.days.length ? d.days.map((x) => h('tr', { id: `day-${x.day_no}` },
       h('td', {}, `${x.day_no}일차`), h('td', {}, x.date), h('td', {}, x.planned_min), h('td', {}, x.actual_min),
       h('td', {}, h('b', { class: x.diff_min > 0 ? 'warn' : 'ok' }, `${x.diff_min > 0 ? '+' : ''}${x.diff_min}`), x.outlier ? h('span', { class: 'pill warn' }, ' 튀는 값') : null),
-      h('td', {}, x.note || '—'), h('td', {}, kst(x.updated_at))))
-      : h('tr', {}, h('td', { colspan: 7, class: 'mut' }, '아직 기록이 없습니다'))))));
+      h('td', {}, x.completion_pct === null ? '—' : `${x.completion_pct}%`), h('td', {}, x.note || '—'), h('td', {}, kst(x.updated_at))))
+      : h('tr', {}, h('td', { colspan: 8, class: 'mut' }, '아직 기록이 없습니다'))))));
   const sm = d.summary;
   parts.push(h('div', { class: 'card' }, h('h3', {}, '합계·평균 (기록이 있는 날만, 단위: 분)'),
     h('div', {}, `전체 ${sm.all.days}일 · 차이 합계 ${sm.all.total_diff_min}분 · 평균 ${sm.all.avg_diff_min ?? '—'}분`),
+    h('div', {}, `과제 완수율: 적은 ${sm.all.completion_days}일 평균 ${sm.all.avg_completion_pct ?? '—'}% (빠진 날 제외)`),
     h('ul', {}, sm.by_week.map((w) => h('li', {}, `${w.week_start} 시작 주(월요일 기준): ${w.days}일 · 합계 ${w.total_diff_min}분 · 평균 ${w.avg_diff_min}분`)))));
   if (d.comparison) {
     const c = d.comparison;

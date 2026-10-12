@@ -201,6 +201,9 @@ CREATE TABLE IF NOT EXISTS diary_days (
   UNIQUE (user_id, day_date),
   UNIQUE (user_id, day_no)
 );
+-- 선택 입력: 그날 완수한 과제의 비율(%). 관찰 지표(분 단위 차이)에는 영향을 주지 않는다.
+ALTER TABLE diary_days ADD COLUMN IF NOT EXISTS completion_pct INTEGER CHECK (completion_pct BETWEEN 0 AND 100);
+
 CREATE TABLE IF NOT EXISTS plan_rule_changes (
   id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   user_id INTEGER NOT NULL UNIQUE REFERENCES users(id),

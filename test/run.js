@@ -238,14 +238,17 @@ await ok('실험: 규칙 변경이 1·2일차를 가리키고 2일차 뒤에 놓
   assert.equal(rc.rule_change.after_day1_id, rc.days[0].id); assert.equal(rc.rule_change.after_day2_id, rc.days[1].id);
   assert.ok(rc.rule_change.changed_at > rc.days[1].created_at);
 });
+await ok('실험: 완수율(%) 범위를 벗어나면 400(기록은 생기지 않음)', async () => assert.equal((await call('POST', '/api/experiment/days', { planned_min: 100, actual_min: 130, completion_pct: 150 })).status, 400));
 await ok('실험: 규칙은 한 번만', async () => assert.equal((await call('POST', '/api/experiment/rule-change', { new_rule: 'n2', reason: 'r' })).status, 409));
-await call('POST', '/api/experiment/days', { planned_min: 120, actual_min: 118 });
+await call('POST', '/api/experiment/days', { planned_min: 120, actual_min: 118, completion_pct: 80 });
 await shift(); await call('POST', '/api/experiment/days', { planned_min: 100, actual_min: 95 });
 await shift(); const d5 = await call('POST', '/api/experiment/days', { planned_min: 100, actual_min: 400 });
 await ok('실험: 5일 기록·튀는 값 표시·합계/평균·전후 비교', () => {
   assert.equal(d5.days.length, 5);
   assert.deepEqual(d5.days.map((d) => d.diff_min), [40, 30, -2, -5, 300]);
   assert.equal(d5.days[4].outlier, true);
+  assert.deepEqual(d5.days.map((d) => d.completion_pct), [null, null, 80, null, null]);
+  assert.equal(d5.summary.all.completion_days, 1); assert.equal(d5.summary.all.avg_completion_pct, 80);
   assert.equal(d5.summary.all.total_diff_min, 363); assert.equal(d5.summary.all.avg_diff_min, 73);
   assert.equal(d5.comparison.before.avg_diff_min, 35); assert.equal(d5.comparison.after.days, 3); assert.equal(d5.comparison.unit, '분');
 });
